@@ -204,8 +204,8 @@ function updateCurrentItem(final = false) {
     const index = Math.floor((360 - degrees % 360) / arcd);
     const item = items[index];
     selectedItem.innerHTML = final 
-        ? `Selected item: <a href="${item.link}" target="_blank">${item.name}</a>`
-        : `Current item: ${item.name}`;
+        ? `<a href="${item.link}" target="_blank">${item.name}</a>`
+        : `${item.name}`;
 }
 
 function easeOut(t, b, c, d) {
