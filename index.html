@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodWheel</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+    background-color: #f8f9fa;
+}
+.canvas-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#wheelCanvas {
+    width: 100%;
+    height: auto;
+    max-width:550px;
+/*     border: 2px solid #343a40; */
+    border-radius: 50%;
+}
+#selectedItem {
+      font-size: xx-large;
+    font-family: math;
+}
+#selectedItem a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+#selectedItem a:hover {
+    text-decoration: underline;
+}
+
+#itemListContainer {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.list-group-item {
+    margin-bottom: 5px;
+}
+header {
+    background-color: #007bff;
+    color: white;
+    padding: 20px;
+    border-radius:10px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container mt-2">
+      <header class="text-center my-4">
+            <h3>Spin to Decide</h3>
+                        <p>inni decision edukkan samayam kalayanda gois</p>
+
+        </header>
+        <div class="row">
+            <div class="col-md-8 text-center position-relative">
+                <canvas id="wheelCanvas" width="500" height="500" class="mb-3"></canvas>
+                <div id="selectedItem" class="mt-3 font-weight-bold"></div>
+                <div class="form-row justify-content-center mt-3">
+                    <div class="col-auto">
+                        <input type="text" id="newItem" class="form-control" placeholder="Pwuthiya item">
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" id="newItemLink" class="form-control" placeholder="link">
+                    </div>
+                </div>
+              <div class="col-auto justify-content-center mt-3">
+                        <button id="addItemButton" class="btn btn-success">Add Item</button>
+                    </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card" id="itemListContainer">
+                    <div class="card-header">
+                        Food Items
+                    </div>
+                    <div class="card-body p-2">
+                        <ul id="itemList" class="list-group"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const selectedItem = document.getElementById('selectedItem');
+const newItemInput = document.getElementById('newItem');
+const newItemLinkInput = document.getElementById('newItemLink');
+const addItemButton = document.getElementById('addItemButton');
+const itemList = document.getElementById('itemList');
+
+let items = [
+    { name: 'Chocolate Oats', link: 'https://www.instagram.com/p/C7LicD7JPDa/' },
+    { name: 'Moringa Sprouts Paratha', link: 'https://www.instagram.com/p/C5xS2XnSWEY/' },
+    { name: 'Upma', link: 'https://www.instagram.com/p/C7_m8QsvJV0/' },
+    { name: 'Protein Wrap', link: 'https://www.instagram.com/p/C6L1ZOzhk25/' },
+    { name: 'Veggie Rice bowl', link: 'https://www.instagram.com/p/C5thxZbv5bA/' },
+    { name: 'Salad Toast', link: 'https://www.instagram.com/p/C74DheQuFVU/' },
+    { name: 'Paneer Paratha', link: 'https://www.instagram.com/p/C3pA132IuIe/' },    
+    { name: 'Omelette sandwich', link: 'https://www.instagram.com/p/C6aqyhgv-_I/' },
+    { name: 'Oats Chilla 🥞 ', link: 'https://www.instagram.com/p/C5f-NQLyp95/' }, 
+    { name: 'crispy potato salad🥔🥗', link: 'https://www.instagram.com/p/C3VSQYtSVK7/' }, 
+    
+];
+
+let startAngle = 0;
+let arc = Math.PI / (items.length / 2);
+let spinTimeout = null;
+let spinAngleStart = 10;
+let spinTime = 0;
+let spinTimeTotal = 0;
+
+function drawRouletteWheel() {
+    const outsideRadius = 200;
+    const textRadius = 160;
+    const insideRadius = 125;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+
+    for (let i = 0; i < items.length; i++) {
+        const angle = startAngle + i * arc;
+        ctx.fillStyle = getColor(i, items.length);
+
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, outsideRadius, angle, angle + arc, false);
+        ctx.arc(canvas.width / 2, canvas.height / 2, insideRadius, angle + arc, angle, true);
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px Arial'
+        ctx.translate(canvas.width / 2 + Math.cos(angle + arc / 2) * textRadius, 
+                      canvas.height / 2 + Math.sin(angle + arc / 2) * textRadius);
+        ctx.rotate(angle + arc / 2 + Math.PI / 2);
+        const text = items[i].name;
+        ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
+        ctx.restore();
+    }
+     // Draw center circle
+    ctx.fillStyle = 'purple';
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, 100, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Draw center text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Spin', canvas.width / 2, canvas.height / 2);
+  
+    // Arrow
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2 - 4, canvas.height / 2 - (outsideRadius + 5));
+    ctx.lineTo(canvas.width / 2 + 4, canvas.height / 2 - (outsideRadius + 5));
+    ctx.lineTo(canvas.width / 2 + 4, canvas.height / 2 - (outsideRadius - 5));
+    ctx.lineTo(canvas.width / 2 + 9, canvas.height / 2 - (outsideRadius - 5));
+    ctx.lineTo(canvas.width / 2 + 0, canvas.height / 2 - (outsideRadius - 13));
+    ctx.lineTo(canvas.width / 2 - 9, canvas.height / 2 - (outsideRadius - 5));
+    ctx.lineTo(canvas.width / 2 - 4, canvas.height / 2 - (outsideRadius - 5));
+    ctx.lineTo(canvas.width / 2 - 4, canvas.height / 2 - (outsideRadius + 5));
+    ctx.fill();
+}
+
+function getColor(itemIndex, maxItems) {
+    const hue = (itemIndex / maxItems) * 360;
+    return `hsl(${hue}, 100%, 50%)`;
+}
+
+function rotateWheel() {
+    spinTime += 30;
+    if (spinTime >= spinTimeTotal) {
+        stopRotateWheel();
+        return;
+    }
+    const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+    startAngle += (spinAngle * Math.PI / 180);
+    drawRouletteWheel();
+    updateCurrentItem();
+    spinTimeout = setTimeout(rotateWheel, 30);
+}
+
+function stopRotateWheel() {
+    clearTimeout(spinTimeout);
+    updateCurrentItem(true);
+}
+
+function updateCurrentItem(final = false) {
+    const degrees = startAngle * 180 / Math.PI + 90;
+    const arcd = arc * 180 / Math.PI;
+    const index = Math.floor((360 - degrees % 360) / arcd);
+    const item = items[index];
+    selectedItem.innerHTML = final 
+        ? `Selected item: <a href="${item.link}" target="_blank">${item.name}</a>`
+        : `Current item: ${item.name}`;
+}
+
+function easeOut(t, b, c, d) {
+    const ts = (t /= d) * t;
+    const tc = ts * t;
+    return b + c * (tc + -3 * ts + 3 * t);
+}
+
+canvas.addEventListener('click', () => {
+    spinAngleStart = Math.random() * 10 + 10;
+    spinTime = 0;
+    spinTimeTotal = Math.random() * 3000 + 4000;
+    rotateWheel();
+});
+
+addItemButton.addEventListener('click', () => {
+    const newItem = newItemInput.value.trim();
+    const newItemLink = newItemLinkInput.value.trim();
+    if (newItem && newItemLink) {
+        items.push({ name: newItem, link: newItemLink });
+        newItemInput.value = '';
+        newItemLinkInput.value = '';
+        updateItemList();
+        arc = Math.PI / (items.length / 2);
+        drawRouletteWheel();
+    }
+});
+
+function updateItemList() {
+    itemList.innerHTML = '';
+    items.forEach(item => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.textContent = item.name;
+        a.setAttribute("href",item.link);
+        a.setAttribute("target","_blank")
+        a.setAttribute("rel","noopener noreferrer")
+        li.appendChild(a);
+        itemList.appendChild(li);
+    });
+}
+
+updateItemList();
+drawRouletteWheel();
+
+</script>
+</body>
+</html>
